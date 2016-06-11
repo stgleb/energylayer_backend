@@ -5,15 +5,11 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"time"
 )
-
-
-
 
 func DecodeData(data string) storage.Measurement {
 	timestamp := time.Now().Unix()
@@ -33,10 +29,6 @@ func DecodeData(data string) storage.Measurement {
 		Power:       power,
 		Temperature: temperature,
 	}
-}
-
-func StoreData(m storage.Measurement) {
-
 }
 
 func Receiver(w http.ResponseWriter, r *http.Request) {
