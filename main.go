@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"database/sql"
+	"strings"
 )
 
 var db *sql.DB
@@ -36,10 +37,32 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	device_id := vars["device_id"]
 	data := vars["data_string"]
+	ipAddr := strings.Split(r.RemoteAddr, ":")[0]
 	log.Printf("Received data %s from device %s", data, device_id)
+
+	log.Printf("Get device by uuid = %s", device_id)
+	device, err := storage.GetDeviceById(db, ipAddr)
+
+	if device.IpAddress != ipAddr {
+		storage.UpdateDeviceIP(db, device_id, ipAddr)
+	}
+
+	var id int
+
+	if err != nil {
+		log.Printf("Device not found %s . Try to create new one", err.Error())
+		id, err = storage.CreateDevice(db, device_id, ipAddr)
+
+		if err != nil {
+			log.Printf("Error while creating new device %s", err.Error())
+		}
+	} else {
+		id = device.Id
+	}
 
 	timestamp, gpio, voltage, power, temperature := utils.DecodeData(data)
 	m :=  storage.Measurement{
+		DeviceId: id,
 		Timestamp: timestamp,
 		Gpio: gpio,
 		Voltage: voltage,
@@ -47,7 +70,17 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 		Temperature: temperature,
 	}
 
+	// Save measurement to database .
+	err = storage.CreateMeasurement(db, m)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	log.Println(m.String())
+	w.WriteHeader(http.StatusCreated)
 }
 
 func main() {

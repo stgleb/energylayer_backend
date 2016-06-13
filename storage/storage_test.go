@@ -63,18 +63,21 @@ func TestGetMeasurements(t *testing.T) {
 
 func TestCreateDevice(t *testing.T) {
 	db, _ := StorageFactory("memory")
-	err := CreateDevice(db, "abcd", "127.0.0.1")
+	id, err := CreateDevice(db, "abcd", "127.0.0.1")
 	assert.Nil(t, err)
+	assert.NotNil(t, id)
 
-	err = CreateDevice(db, "abcd", "127.0.0.1")
+	id, err = CreateDevice(db, "abcd", "127.0.0.1")
+	assert.Equal(t, id, -1)
 	assert.NotNil(t, err)
 }
 
 func TestGetDeviceById(t *testing.T) {
 	db, _ := StorageFactory("memory")
 	uuid := "abcd"
-	err := CreateDevice(db, uuid, "127.0.0.1")
+	id, err := CreateDevice(db, uuid, "127.0.0.1")
 	assert.Nil(t, err)
+	assert.NotNil(t, id)
 
 	device, err := GetDeviceById(db, uuid)
 	assert.Equal(t, device.Uuid, uuid)

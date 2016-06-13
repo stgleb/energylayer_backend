@@ -81,6 +81,7 @@ func CreateMeasurement(Database *sql.DB, m Measurement) error {
 		return err
 	}
 
+	log.Printf("Data has been inserted sucessfully")
 	return nil
 }
 
@@ -144,10 +145,9 @@ func GetDeviceById(Database *sql.DB, uuid string) (Device, error) {
 
 	var ipAddr string
 	var id int
-	var user_id int
 
-	row := tx.QueryRow("select id, uuid, user_id, ip_addr from users where uuid = ?", 1)
-	err = row.Scan(&id, &uuid, &user_id, &ipAddr)
+	row := tx.QueryRow("select id, uuid, ip_addr from device where uuid = ?", 1)
+	err = row.Scan(&id, &uuid, &ipAddr)
 
 	if err != nil {
 		log.Printf("Error while reading data from the row %s", err.Error())
@@ -157,12 +157,11 @@ func GetDeviceById(Database *sql.DB, uuid string) (Device, error) {
 	return Device{
 		Id:        id,
 		Uuid:      uuid,
-		UserId:    user_id,
 		IpAddress: ipAddr,
 	}, nil
 }
 
-func CreateDevice(Database *sql.DB, uuid, ipAddress string) error {
+func UpdateDeviceIP(Database *sql.DB, uuid, ipAddr string) error {
 	tx, err := Database.Begin()
 
 	if err != nil {
@@ -170,14 +169,47 @@ func CreateDevice(Database *sql.DB, uuid, ipAddress string) error {
 		return err
 	}
 	defer tx.Rollback()
+	log.Printf("Update device uuid = %s ip address to %s", uuid, ipAddr)
 
-	_, err = tx.Exec("INSERT device(uuid, ip_addr) VALUES(?, ?)", uuid, ipAddress)
+	_, err = tx.Exec("update device set ip_addr = ? where uuid = ?", ipAddr, uuid)
 
 	if err != nil {
-		log.Printf("Error while inserting device: %s", err.Error())
+		log.Printf("Error while updating device %s ip address to %s %s", uuid, ipAddr, err.Error())
 		return err
 	}
 
 	tx.Commit()
 	return nil
+}
+
+func CreateDevice(Database *sql.DB, uuid, ipAddress string) (int, error) {
+	tx, err := Database.Begin()
+
+	if err != nil {
+		log.Printf("Error while opening transaction message: %s", err.Error())
+		return -1, err
+	}
+	defer tx.Rollback()
+
+	log.Printf("Inserting new device with uuid %s", uuid)
+	_, err = tx.Exec("INSERT device(uuid, ip_addr) VALUES(?, ?)", uuid, ipAddress)
+
+	if err != nil {
+		log.Printf("Error while inserting device: %s", err.Error())
+		return -1, err
+	}
+
+	var id int
+
+	row := tx.QueryRow("select id from device where uuid = ?", 1)
+	err = row.Scan(&id)
+
+
+	if err != nil {
+		log.Printf("Error while reading data from the row %s", err.Error())
+		return -1, err
+	}
+
+	tx.Commit()
+	return id, nil
 }
