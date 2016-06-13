@@ -28,7 +28,7 @@ type DatabaseStorage struct {
 	Database sql.DB
 }
 
-func StorageFactory(storageType string) Storage {
+func StorageFactory(storageType string) (*sql.DB, error) {
 	var uri string
 	var dbType string
 
@@ -44,29 +44,28 @@ func StorageFactory(storageType string) Storage {
 	storage, err := NewStorage(uri, dbType)
 
 	if err != nil {
-		return nil
+		return storage, err
 	}
 
-	return storage
+	return storage, nil
 }
 
-func NewStorage(uri, dbType string) (Storage, error) {
+func NewStorage(uri, dbType string) (*sql.DB, error) {
 	db, err := sql.Open(dbType, uri)
 
 	if err != nil {
 		log.Printf("Error during connecting to database %s", err.Error())
-		return nil, err
+		return db, err
 	}
 
-	return Storage{
-		db,
-	}, nil
+	return db, nil
 }
 
-func (self *DatabaseStorage) CreateMeasurement(m Measurement) {
-	tx, err := self.Database.Begin()
+func CreateMeasurement(Database *sql.DB, m Measurement) error {
+	tx, err := Database.Begin()
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
+		return err
 	}
 	defer tx.Rollback()
 
@@ -79,21 +78,26 @@ func (self *DatabaseStorage) CreateMeasurement(m Measurement) {
 
 	if err != nil {
 		log.Printf("Error while commiting transaction message: %s", err.Error())
+		return err
 	}
+
+	return nil
 }
 
-func (self *DatabaseStorage) GetMeasurements(count int) ([]Measurement, error) {
+func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
 	var result []Measurement
 	result = make([]Measurement, count)
 
-	tx, err := self.Database.Begin()
+	tx, err := Database.Begin()
+	defer tx.Rollback()
+
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
 		return nil, err
 	}
 
-	rows, err := tx.Query("SELECT voltage, power, temperature, device_id"+
-		"from measurement ORDER BY DESC LIMIT ?", count)
+	rows, err := tx.Query("SELECT timestamp, voltage, power, temperature, device_id"+
+		" from measurement ORDER BY DESC LIMIT ?", count)
 	defer rows.Close()
 
 	if err != nil {
@@ -101,13 +105,14 @@ func (self *DatabaseStorage) GetMeasurements(count int) ([]Measurement, error) {
 		return nil, err
 	}
 
+	var timestamp int64
 	var voltage int
 	var power int
 	var temperature int
 	var device_id int
 
 	for rows.Next() {
-		err := rows.Scan(&voltage, &power, &temperature, &device_id)
+		err := rows.Scan(&timestamp, &voltage, &power, &temperature, &device_id)
 
 		if err != nil {
 			log.Printf("Error while extracting value from row %s", err.Error())
@@ -115,6 +120,7 @@ func (self *DatabaseStorage) GetMeasurements(count int) ([]Measurement, error) {
 		}
 
 		m := Measurement{
+			Timestamp:   timestamp,
 			Voltage:     voltage,
 			Power:       power,
 			Temperature: temperature,
@@ -127,16 +133,15 @@ func (self *DatabaseStorage) GetMeasurements(count int) ([]Measurement, error) {
 	return result, nil
 }
 
-func (self *DatabaseStorage) GetDeviceById(uuid string) (Device, error) {
-	tx, err := self.Database.Begin()
+func GetDeviceById(Database *sql.DB, uuid string) (Device, error) {
+	tx, err := Database.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
-		return nil, err
+		return Device{}, err
 	}
 	defer tx.Rollback()
 
-	var uuid string
 	var ipAddr string
 	var id int
 	var user_id int
@@ -146,7 +151,7 @@ func (self *DatabaseStorage) GetDeviceById(uuid string) (Device, error) {
 
 	if err != nil {
 		log.Printf("Error while reading data from the row %s", err.Error())
-		return nil, err
+		return Device{}, err
 	}
 
 	return Device{
@@ -157,8 +162,8 @@ func (self *DatabaseStorage) GetDeviceById(uuid string) (Device, error) {
 	}, nil
 }
 
-func (self *DatabaseStorage) CreateDevice(uuid, ipAddress string) error {
-	tx, err := self.Database.Begin()
+func CreateDevice(Database *sql.DB, uuid, ipAddress string) error {
+	tx, err := Database.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())

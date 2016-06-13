@@ -2,34 +2,13 @@ package main
 
 import (
 	"./storage"
-	"encoding/hex"
+	"./utils"
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"time"
 )
-
-func DecodeData(data string) storage.Measurement {
-	timestamp := time.Now().Unix()
-	tmp, _ := hex.DecodeString(data[:4])
-	gpio := int(tmp[0])
-	tmp, _ = hex.DecodeString(data[4:8])
-	voltage := int(tmp[0])
-	tmp, _ = hex.DecodeString(data[8:12])
-	power := int(tmp[0])
-	tmp, _ = hex.DecodeString(data[12:16])
-	temperature := int(tmp[0])
-
-	return storage.Measurement{
-		Timestamp:   timestamp,
-		Gpio:        gpio,
-		Voltage:     voltage,
-		Power:       power,
-		Temperature: temperature,
-	}
-}
 
 func Receiver(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -37,9 +16,16 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 	data := vars["data_string"]
 	log.Printf("Received data %s from device %s", data, device_id)
 
-	m := DecodeData(data)
-	log.Printf("Measurement %v", m)
+	timestamp, gpio, voltage, power, temperature := utils.DecodeData(data)
+	m :=  storage.Measurement{
+		Timestamp: timestamp,
+		Gpio: gpio,
+		Voltage: voltage,
+		Power: power,
+		Temperature: temperature,
+	}
 
+	log.Println(m.String())
 }
 
 func main() {
