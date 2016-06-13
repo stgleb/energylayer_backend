@@ -3,12 +3,12 @@ package main
 import (
 	"./storage"
 	"./utils"
+	"database/sql"
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"database/sql"
 	"strings"
 )
 
@@ -17,7 +17,7 @@ var err error
 
 func init() {
 	log.Println("Initializing application")
-	db, err =  storage.StorageFactory("mysql")
+	db, err = storage.StorageFactory("mysql")
 
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
@@ -61,12 +61,12 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 	}
 
 	timestamp, gpio, voltage, power, temperature := utils.DecodeData(data)
-	m :=  storage.Measurement{
-		DeviceId: id,
-		Timestamp: timestamp,
-		Gpio: gpio,
-		Voltage: voltage,
-		Power: power,
+	m := storage.Measurement{
+		DeviceId:    id,
+		Timestamp:   timestamp,
+		Gpio:        gpio,
+		Voltage:     voltage,
+		Power:       power,
 		Temperature: temperature,
 	}
 

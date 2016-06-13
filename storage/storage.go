@@ -204,7 +204,6 @@ func CreateDevice(Database *sql.DB, uuid, ipAddress string) (int, error) {
 	row := tx.QueryRow("select id from device where uuid = ?", 1)
 	err = row.Scan(&id)
 
-
 	if err != nil {
 		log.Printf("Error while reading data from the row %s", err.Error())
 		return -1, err

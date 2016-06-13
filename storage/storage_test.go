@@ -2,11 +2,10 @@ package storage
 
 import (
 	"github.com/stretchr/testify/assert"
+	"log"
 	"testing"
 	"time"
-	"log"
 )
-
 
 func TestStorageFactory(t *testing.T) {
 	_, err := StorageFactory("wrong")
@@ -83,4 +82,3 @@ func TestGetDeviceById(t *testing.T) {
 	assert.Equal(t, device.Uuid, uuid)
 	assert.Nil(t, err)
 }
-

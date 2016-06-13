@@ -23,8 +23,7 @@ func (m *Measurement) String() string {
 		m.Timestamp, m.Gpio, m.Voltage, m.Power, m.Temperature)
 }
 
-
 func (d *Device) String() string {
 	return fmt.Sprintf("<Device :{ id: %d, uuid: %s, user_id: %d, ip_address: %s}>",
-				d.Id, d.Uuid, d.UserId, d.IpAddress)
+		d.Id, d.Uuid, d.UserId, d.IpAddress)
 }

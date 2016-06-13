@@ -1,16 +1,16 @@
 package utils
 
 import (
-	"time"
-	"log"
 	"encoding/hex"
+	"log"
+	"time"
 )
 
 func convertByteToInt(in []byte) int {
-    return  (int(in[0]) << 24 | int(in[1]))
+	return (int(in[0])<<24 | int(in[1]))
 }
 
-func DecodeData(data string) (int64, int,  int, int, int) {
+func DecodeData(data string) (int64, int, int, int, int) {
 	timestamp := time.Now().Unix()
 	tmp, _ := hex.DecodeString(data[:4])
 	gpio := convertByteToInt(tmp)
@@ -29,7 +29,7 @@ func DecodeData(data string) (int64, int,  int, int, int) {
 	log.Printf("temperature %d", temperature)
 
 	log.Printf("timestamp %d gpio voltage %d power %d  temperature %d",
-		  timestamp, gpio, power, temperature)
+		timestamp, gpio, power, temperature)
 
 	return timestamp, gpio, voltage, power, temperature
 }
