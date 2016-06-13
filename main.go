@@ -12,8 +12,10 @@ import (
 	"strings"
 )
 
-var db *sql.DB
-var err error
+var (
+	db  *sql.DB
+	err error
+)
 
 func init() {
 	log.Println("Initializing application")
