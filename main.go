@@ -8,7 +8,29 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"database/sql"
 )
+
+var db *sql.DB
+var err error
+
+func init() {
+	log.Println("Initializing application")
+	db, err =  storage.StorageFactory("mysql")
+
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+	}
+
+	log.Printf("Connected to database, verify connection")
+	err = db.Ping()
+
+	if err != nil {
+		log.Fatalf("Error pinging to database %s", err.Error())
+	}
+
+	log.Println("Connection has been established successfully")
+}
 
 func Receiver(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
