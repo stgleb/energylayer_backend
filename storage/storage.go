@@ -67,10 +67,13 @@ func CreateMeasurement(Database *sql.DB, m Measurement) error {
 		log.Printf("Error while opening transaction message: %s", err.Error())
 		return err
 	}
-	defer tx.Rollback()
 
-	stmt, err := tx.Prepare("INSERT measurement(voltage, power, temperature, device_id)" +
+	stmt, err := tx.Prepare("INSERT INTO measurement(voltage, power, temperature, device_id)" +
 		"VALUES (?, ?, ?, ?)")
+	if err != nil {
+		log.Printf("Error while creating statement %s", err.Error())
+		return err
+	}
 	defer stmt.Close()
 
 	stmt.Exec(m.Voltage, m.Power, m.Temperature, m.DeviceId)
@@ -86,11 +89,9 @@ func CreateMeasurement(Database *sql.DB, m Measurement) error {
 }
 
 func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
-	var result []Measurement
-	result = make([]Measurement, count)
+	result := make([]Measurement, 0, count)
 
 	tx, err := Database.Begin()
-	defer tx.Rollback()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
@@ -98,8 +99,7 @@ func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
 	}
 
 	rows, err := tx.Query("SELECT timestamp, voltage, power, temperature, device_id"+
-		" from measurement ORDER BY DESC LIMIT ?", count)
-	defer rows.Close()
+		" from measurement ORDER BY timestamp DESC LIMIT ?", count)
 
 	if err != nil {
 		log.Printf("Error while executing query %s", err.Error())
@@ -113,8 +113,8 @@ func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
 	var device_id int
 
 	for rows.Next() {
-		err := rows.Scan(&timestamp, &voltage, &power, &temperature, &device_id)
-
+		err := rows.Scan(&timestamp, &voltage, &power,
+			&temperature, &device_id)
 		if err != nil {
 			log.Printf("Error while extracting value from row %s", err.Error())
 			return nil, err
@@ -130,6 +130,8 @@ func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
 
 		result = append(result, m)
 	}
+	rows.Close()
+	tx.Commit()
 
 	return result, nil
 }
@@ -141,12 +143,12 @@ func GetDeviceById(Database *sql.DB, uuid string) (Device, error) {
 		log.Printf("Error while opening transaction message: %s", err.Error())
 		return Device{}, err
 	}
-	defer tx.Rollback()
+	defer tx.Commit()
 
 	var ipAddr string
 	var id int
 
-	row := tx.QueryRow("select id, uuid, ip_addr from device where uuid = ?", 1)
+	row := tx.QueryRow("select id, uuid, ip_addr from device where uuid = ?", uuid)
 	err = row.Scan(&id, &uuid, &ipAddr)
 
 	if err != nil {
@@ -182,33 +184,24 @@ func UpdateDeviceIP(Database *sql.DB, uuid, ipAddr string) error {
 	return nil
 }
 
-func CreateDevice(Database *sql.DB, uuid, ipAddress string) (int, error) {
+func CreateDevice(Database *sql.DB, uuid, ipAddress string) error {
 	tx, err := Database.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
-		return -1, err
+		return err
 	}
 	defer tx.Rollback()
 
 	log.Printf("Inserting new device with uuid %s", uuid)
-	_, err = tx.Exec("INSERT device(uuid, ip_addr) VALUES(?, ?)", uuid, ipAddress)
+	_, err = tx.Exec("INSERT INTO device(uuid, ip_addr) VALUES(?, ?)", uuid, ipAddress)
 
 	if err != nil {
 		log.Printf("Error while inserting device: %s", err.Error())
-		return -1, err
-	}
-
-	var id int
-
-	row := tx.QueryRow("select id from device where uuid = ?", 1)
-	err = row.Scan(&id)
-
-	if err != nil {
-		log.Printf("Error while reading data from the row %s", err.Error())
-		return -1, err
+		return err
 	}
 
 	tx.Commit()
-	return id, nil
+
+	return nil
 }

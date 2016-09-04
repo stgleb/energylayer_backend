@@ -48,16 +48,17 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 	if device.IpAddress != ipAddr {
 		storage.UpdateDeviceIP(db, device_id, ipAddr)
 	}
-
 	var id int
 
 	if err != nil {
 		log.Printf("Device not found %s . Try to create new one", err.Error())
-		id, err = storage.CreateDevice(db, device_id, ipAddr)
+		err = storage.CreateDevice(db, device_id, ipAddr)
 
 		if err != nil {
 			log.Printf("Error while creating new device %s", err.Error())
 		}
+
+		device, err = storage.GetDeviceById(db, ipAddr)
 	} else {
 		id = device.Id
 	}
