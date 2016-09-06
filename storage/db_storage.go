@@ -16,7 +16,11 @@ const (
 	HOST     = "localhost"
 )
 
-func StorageFactory(storageType string) (*sql.DB, error) {
+type DatabaseStorage struct {
+	*sql.DB
+}
+
+func StorageFactory(storageType string) (DatabaseStorage, error) {
 	var uri string
 	var dbType string
 
@@ -29,16 +33,16 @@ func StorageFactory(storageType string) (*sql.DB, error) {
 		dbType = "sqlite3"
 	}
 
-	storage, err := NewStorage(uri, dbType)
+	storage, err := newStorage(uri, dbType)
 
 	if err != nil {
-		return storage, err
+		return DatabaseStorage{storage}, err
 	}
 
-	return storage, nil
+	return DatabaseStorage{storage}, nil
 }
 
-func NewStorage(uri, dbType string) (*sql.DB, error) {
+func newStorage(uri, dbType string) (*sql.DB, error) {
 	db, err := sql.Open(dbType, uri)
 
 	if err != nil {
@@ -49,8 +53,8 @@ func NewStorage(uri, dbType string) (*sql.DB, error) {
 	return db, nil
 }
 
-func CreateMeasurement(Database *sql.DB, m Measurement) error {
-	tx, err := Database.Begin()
+func (db DatabaseStorage) CreateMeasurement(m Measurement) error {
+	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
 		return err
@@ -76,10 +80,9 @@ func CreateMeasurement(Database *sql.DB, m Measurement) error {
 	return nil
 }
 
-func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
+func (db DatabaseStorage) GetMeasurements(count int) ([]Measurement, error) {
 	result := make([]Measurement, 0, count)
-
-	tx, err := Database.Begin()
+	tx, err := db.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
@@ -124,8 +127,8 @@ func GetMeasurements(Database *sql.DB, count int) ([]Measurement, error) {
 	return result, nil
 }
 
-func GetDeviceById(Database *sql.DB, uuid string) (Device, error) {
-	tx, err := Database.Begin()
+func (db DatabaseStorage) GetDeviceById(uuid string) (Device, error) {
+	tx, err := db.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
@@ -151,8 +154,8 @@ func GetDeviceById(Database *sql.DB, uuid string) (Device, error) {
 	}, nil
 }
 
-func UpdateDeviceIP(Database *sql.DB, uuid, ipAddr string) error {
-	tx, err := Database.Begin()
+func (db DatabaseStorage) UpdateDeviceIP(uuid, ipAddr string) error {
+	tx, err := db.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
@@ -172,8 +175,8 @@ func UpdateDeviceIP(Database *sql.DB, uuid, ipAddr string) error {
 	return nil
 }
 
-func CreateDevice(Database *sql.DB, uuid, ipAddress string) error {
-	tx, err := Database.Begin()
+func (db DatabaseStorage) CreateDevice(uuid, ipAddress string) error {
+	tx, err := db.Begin()
 
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
