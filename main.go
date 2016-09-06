@@ -82,13 +82,40 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(m.String())
+	log.Println(m)
 	w.WriteHeader(http.StatusCreated)
+}
+
+func UserDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	count := int(vars["count"])
+
+	log.Printf("Count: %d", count)
+	if interval, ok := vars["interval"]; ok {
+    		log.Printf("Interval: %d", interval)
+	}
+}
+
+func DeviceMeasurements(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	device_id := vars["device_id"]
+	count := int(vars["count"])
+
+	log.Printf("device_id: %s", device_id)
+	log.Printf("Count: %d", count)
+
+	if interval, ok := vars["interval"]; ok {
+    		log.Printf("Interval: %d", interval)
+	}
 }
 
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/rs/data/post/{device_id}/{data_string}", Receiver)
+	r.HandleFunc("/api/data/user/measurement/{count}/{interval}", UserDeviceMeasurements)
+	r.HandleFunc("/api/data/user/measurement/{count}", UserDeviceMeasurements)
+	r.HandleFunc("/api/measurement/{device_uuid}/count/{count}/{interval}", DeviceMeasurements)
+	r.HandleFunc("/api/measurement/{device_uuid}/count/{count}", DeviceMeasurements)
 
 	port := *flag.String("port", "8000", "Port to listen")
 	host := *flag.String("host", "0.0.0.0", "host name")
