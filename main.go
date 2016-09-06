@@ -92,7 +92,7 @@ func UserDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Count: %d", count)
 	if interval, ok := vars["interval"]; ok {
-    		log.Printf("Interval: %d", interval)
+		log.Printf("Interval: %d", interval)
 	}
 }
 
@@ -105,7 +105,7 @@ func DeviceMeasurements(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Count: %d", count)
 
 	if interval, ok := vars["interval"]; ok {
-    		log.Printf("Interval: %d", interval)
+		log.Printf("Interval: %d", interval)
 	}
 }
 

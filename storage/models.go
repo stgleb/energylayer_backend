@@ -3,12 +3,16 @@ package storage
 import "fmt"
 
 type Measurement struct {
-	Timestamp   int64
-	Gpio        int
-	Voltage     int
-	Power       int
-	Temperature int
-	DeviceId    int
+	Timestamp   int64 `json:"timestamp"`
+	Gpio        int   `json:"gpio"`
+	Voltage     int   `json:"voltage"`
+	Current     int   `json:"current"`
+	Power       int   `json:"power"`
+	Temperature int   `json:"temperature"`
+	DeviceId    int   `json:"device_id"`
+
+	encoded []byte
+	err     error
 }
 
 type Device struct {
