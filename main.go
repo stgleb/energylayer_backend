@@ -41,7 +41,7 @@ func Receiver(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received data %s from device %s", data, device_id)
 
 	log.Printf("Get device by uuid = %s", device_id)
-	device, err := db.GetDeviceById(ipAddr)
+	device, err := db.GetDeviceById(device_id)
 
 	if device.IpAddress != ipAddr {
 		db.UpdateDeviceIP(device_id, ipAddr)
@@ -147,6 +147,5 @@ func main() {
 	host := *flag.String("host", "0.0.0.0", "host name")
 	addressString := fmt.Sprintf("%s:%s", host, port)
 	log.Printf("Listen addr %s", addressString)
-
 	log.Fatal(http.ListenAndServe(addressString, r))
 }
