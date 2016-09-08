@@ -1,6 +1,9 @@
 package storage
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Measurement struct {
 	Timestamp   int64 `json:"timestamp"`
@@ -30,4 +33,21 @@ func (m Measurement) String() string {
 func (d Device) String() string {
 	return fmt.Sprintf("<Device :{ id: %d, uuid: %s, user_id: %d, ip_address: %s}>",
 		d.Id, d.Uuid, d.UserId, d.IpAddress)
+}
+
+// Declare with pointer receiver, as long as method will modify measurement content
+func (m *Measurement) ensureEncoded() {
+	if m.encoded == nil && m.err == nil {
+		m.encoded, m.err = json.Marshal(m)
+	}
+}
+
+func (m *Measurement) Length() int {
+	m.ensureEncoded()
+	return len(m.encoded)
+}
+
+func (m *Measurement) Encode() ([]byte, error) {
+	m.ensureEncoded()
+	return m.encoded, m.err
 }

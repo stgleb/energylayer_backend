@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 type KafkaStorage struct {
 	*sql.DB
 	MeasurementProducer sarama.AsyncProducer
@@ -19,8 +18,8 @@ func newAccessLogProducer(brokerList []string) (sarama.AsyncProducer, error) {
 	// For the access log, we are looking for AP semantics, with high throughput.
 	// By creating batches of compressed messages, we reduce network I/O at a cost of more latency.
 	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForLocal       // Only wait for the leader to ack
-	config.Producer.Compression = sarama.CompressionGZIP   // Compress messages
+	config.Producer.RequiredAcks = sarama.WaitForLocal        // Only wait for the leader to ack
+	config.Producer.Compression = sarama.CompressionGZIP      // Compress messages
 	config.Producer.Flush.Frequency = 1000 * time.Millisecond // Flush batches every 500ms
 
 	producer, err := sarama.NewAsyncProducer(brokerList, config)
@@ -36,7 +35,7 @@ func newAccessLogProducer(brokerList []string) (sarama.AsyncProducer, error) {
 		}
 	}()
 
-	return producer
+	return producer, nil
 }
 
 func NewKafkaStorage(brokerList []string) (KafkaStorage, error) {
@@ -44,7 +43,7 @@ func NewKafkaStorage(brokerList []string) (KafkaStorage, error) {
 
 	if err != nil {
 		log.Printf("Error while creating Access logger %s", err.Error())
-		return nil, err
+		return KafkaStorage{}, err
 	}
 
 	return KafkaStorage{
@@ -52,7 +51,22 @@ func NewKafkaStorage(brokerList []string) (KafkaStorage, error) {
 	}, nil
 }
 
-func (kafka KafkaStorage) CreateMeasurement(m Measurement) error {
+func (kafka KafkaStorage) Close() error {
+	if err := kafka.MeasurementProducer.Close(); err != nil {
+		log.Println("Failed to shut down access log producer cleanly", err)
+		return err
+	}
+
+	return nil
+}
+
+func (kafka KafkaStorage) CreateMeasurement(m *Measurement, topicName string) error {
+	kafka.MeasurementProducer.Input() <- &sarama.ProducerMessage{
+		Topic: topicName,
+		Key:   sarama.StringEncoder(m.Timestamp),
+		Value: m,
+	}
+
 	return nil
 }
 
@@ -61,7 +75,7 @@ func (kafka KafkaStorage) GetMeasurement(count int) ([]Measurement, error) {
 }
 
 func (kafka KafkaStorage) GetDeviceById(uuid string) (Device, error) {
-	return nil, nil
+	return Device{}, nil
 }
 
 func (kafka KafkaStorage) CreateDevice(uuid, ipAddress string, userId int) error {
