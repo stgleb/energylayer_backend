@@ -13,7 +13,6 @@ import (
 
 var (
 	db  *storage.DatabaseStorage
-	err error
 )
 
 func init() {
