@@ -23,7 +23,7 @@ func init() {
 		log.Fatalf("Error connecting to database %s", err.Error())
 	}
 
-	log.Printf("Connected to database, verify connection")
+	log.Println("Connected to database, verify connection")
 	err = db.Ping()
 
 	if err != nil {
