@@ -15,7 +15,8 @@ func NewWorkerPool(queueSize, maxWorkersCount int) {
 		Stop:            make(chan struct{}),
 		maxWorkersCount: maxWorkersCount,
 	}
-	pool.run()
+	// Start worker pool event-loop
+	go pool.run()
 
 	return pool
 }
