@@ -5,5 +5,8 @@ package worker_pool
 // write only channel to cancel the task execution.
 type Job interface {
 	Do()
-	Cancel() chan<- struct{}
 }
+
+type JobWithCancel struct{}
+
+type JobWithTimeout struct{}

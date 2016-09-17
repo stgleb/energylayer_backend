@@ -2,12 +2,12 @@ package worker_pool
 
 // Worker
 type Worker struct {
-	Pool           WorkerPool
+	Pool           FixedPool
 	ReceiveChannel chan Job
 	Stop           chan struct{}
 }
 
-func NewWorker(pool WorkerPool, stop chan struct{}) Worker {
+func NewWorker(pool FixedPool, stop chan struct{}) Worker {
 	return Worker{
 		Pool:           pool,
 		ReceiveChannel: make(chan Job),
@@ -33,7 +33,5 @@ func (worker Worker) Run() {
 }
 
 func (worker Worker) Stop() {
-	go func() {
-		worker.Stop <- struct{}{}
-	}()
+	worker.Stop <- struct{}{}
 }

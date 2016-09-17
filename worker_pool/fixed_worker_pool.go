@@ -1,19 +1,23 @@
 package worker_pool
 
-type WorkerPool struct {
+type FixedPool struct {
 	queue           chan chan Job
 	input           chan Job
-	Stop            chan struct{}
+	stop            chan struct{}
+	stopChannels    []chan struct{}
+	workerCount     int
 	maxWorkersCount int
 }
 
 // NOTE: maximum quantity of gorotines is max(queueSize, maxWorkersCount)
 func NewWorkerPool(queueSize, maxWorkersCount int) {
-	pool := WorkerPool{
+	pool := FixedPool{
 		queue:           make(chan chan Job, maxWorkersCount),
 		input:           make(chan Job, queueSize),
-		Stop:            make(chan struct{}),
+		stop:            make(chan struct{}),
+		stopChannels:    make(chan struct{}),
 		maxWorkersCount: maxWorkersCount,
+		workerCount:     0,
 	}
 	// Start worker pool event-loop
 	go pool.run()
@@ -21,18 +25,30 @@ func NewWorkerPool(queueSize, maxWorkersCount int) {
 	return pool
 }
 
-func (pool WorkerPool) Submit(job Job) {
+func (pool FixedPool) Submit(job Job) {
 	pool.input <- job
 }
 
-func (pool WorkerPool) JobQueue() chan chan Job {
+func (pool FixedPool) JobQueue() chan chan Job {
 	return pool.queue
 }
 
-func (pool WorkerPool) run() {
+func (pool FixedPool) Stop() {
+	pool.stop <- struct{}{}
+}
+
+func (pool FixedPool) run() {
 	for {
 		select {
 		case job := <-pool.input:
+			// If worker limit is not exceed - spawn new worker
+			if pool.workerCount < pool.maxWorkersCount {
+				stopChannel := make(chan struct{})
+				worker := NewWorker(pool, stopChannel)
+				pool.stopChannels = append(pool.stopChannels,
+					stopChannel)
+				go worker.Run()
+			}
 			// TODO: remove this goroutine spawn in flavor of
 			// blocking call
 			go func(job Job) {
@@ -41,7 +57,10 @@ func (pool WorkerPool) run() {
 				// Submit job to worker
 				jobChan <- job
 			}(job)
-		case <-pool.Stop:
+		case <-pool.stop:
+			for stopChannel := range pool.stopChannels {
+				stopChannel <- struct{}{}
+			}
 			return
 		}
 	}
