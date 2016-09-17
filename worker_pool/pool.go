@@ -1,5 +1,5 @@
 package worker_pool
 
-// TODO: implement worker pool
-type WorkerPool struct {
+type WorkerPool interface {
+	Submit(job Job)
 }

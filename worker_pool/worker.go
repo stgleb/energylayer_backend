@@ -6,12 +6,17 @@ type Worker struct {
 	Stop  chan struct{}
 }
 
+func NewWorker(input chan chan struct{}, stop chan struct{}) Worker {
+	return Worker{
+		Input: input,
+		Stop:  stop,
+	}
+}
+
 func (worker Worker) Run() {
 	for {
-		select {
-		case jobChan := <-worker.Input:
-			job := <-jobChan
-			job.Do()
-		}
+		jobChan := <-worker.Input
+		job := <-jobChan
+		job.Do()
 	}
 }
