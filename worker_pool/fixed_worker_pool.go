@@ -9,7 +9,7 @@ type FixedPool struct {
 	maxWorkersCount int
 }
 
-// NOTE: maximum quantity of gorotines is max(queueSize, maxWorkersCount)
+// NOTE: maximum quantity of goroutines is max(queueSize, maxWorkersCount)
 func NewWorkerPool(queueSize, maxWorkersCount int) {
 	pool := FixedPool{
 		queue:           make(chan chan Job, maxWorkersCount),
