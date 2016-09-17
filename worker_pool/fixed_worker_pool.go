@@ -7,6 +7,7 @@ type WorkerPool struct {
 	maxWorkersCount int
 }
 
+// NOTE: maximum quantity of gorotines is max(queueSize, maxWorkersCount)
 func NewWorkerPool(queueSize, maxWorkersCount int) {
 	pool := WorkerPool{
 		Queue:           make(chan chan Job, maxWorkersCount),
@@ -27,6 +28,8 @@ func (pool WorkerPool) run() {
 	for {
 		select {
 		case job := <-pool.Input:
+			// TODO: remove this goroutine spawn in flavor of
+			// blocking call
 			go func(job Job) {
 				// Obtain input channel of worker
 				jobChan := <-pool.Queue
