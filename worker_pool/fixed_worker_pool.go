@@ -49,14 +49,10 @@ func (pool FixedPool) run() {
 					stopChannel)
 				go worker.Run()
 			}
-			// TODO: remove this goroutine spawn in flavor of
-			// blocking call
-			go func(job Job) {
-				// Obtain input channel of worker
-				jobChan := <-pool.queue
-				// Submit job to worker
-				jobChan <- job
-			}(job)
+			// Obtain input channel of worker
+			jobChan := <-pool.queue
+			// Submit job to worker
+			jobChan <- job
 		case <-pool.stop:
 			for stopChannel := range pool.stopChannels {
 				stopChannel <- struct{}{}
