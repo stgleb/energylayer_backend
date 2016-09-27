@@ -1,7 +1,9 @@
 package storage
 
-const VOLTAGE = "voltage"
-const POWER = "power"
-const CURRENT = "current"
-const GPIO = "gpio"
-const TEMPERATURE = "temperature"
+const (
+	VOLTAGE     = "voltage"
+	POWER       = "power"
+	CURRENT     = "current"
+	GPIO        = "gpio"
+	TEMPERATURE = "temperature"
+)
