@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"time"
+	"strconv"
 )
 
 const (
@@ -19,13 +20,13 @@ func parseMeasurements(result []client.Result) ([]Measurement, error) {
 
 	for _, r := range result {
 		for _, row := range r.Series {
-			var m map[string]int
+			m := make(map[string]int)
 
 			for _, val := range row.Values {
 				// Convert tuple of measurements to map <column: value>
 				for index, column := range row.Columns {
-					if asInt, ok := val[index].(int); ok {
-						m[column] = asInt
+					if i, err := strconv.ParseInt(fmt.Sprintf("%s", val[index]), 10, 64); err == nil {
+						m[column] = int(i)
 					}
 				}
 
