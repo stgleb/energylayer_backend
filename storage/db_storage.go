@@ -68,7 +68,12 @@ func (db DatabaseStorage) CreateMeasurement(m Measurement) error {
 	}
 	defer stmt.Close()
 
-	stmt.Exec(m.Voltage, m.Power, m.Temperature, m.DeviceId)
+	_, err = stmt.Exec(m.Voltage, m.Power, m.Temperature, m.DeviceId)
+	if err != nil {
+		log.Printf("Error while execuring statement: %s", err.Error())
+		return err
+	}
+
 	err = tx.Commit()
 
 	if err != nil {
