@@ -23,7 +23,11 @@ var influx InfluxDbStorage = InfluxDbStorage{
 	UserName: USER,
 	Password: PASSWORD,
 	Addr:     ADDR,
-	Client:   fakeClient,
+	Client:   NewFakeClient(),
+}
+
+func NewFakeClient() *FakeClient {
+	return &FakeClient{}
 }
 
 func (fake FakeClient) Ping(timeout time.Duration) (time.Duration, string, error) {
