@@ -49,7 +49,7 @@ func NewInfluxDBStorage(dbName, userName, password, addr, clientType string) (*I
 		Command:  fmt.Sprintf("USE %s", dbName),
 		Database: dbName,
 	}
-	// TODO: research wether use statement is needed in Go client
+	// TODO: research whether use statement is needed in Go client
 	_, err = http_client.Query(query)
 	if err != nil {
 		return nil, err
