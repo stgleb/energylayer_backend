@@ -6,8 +6,8 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"log"
 	"math/rand"
-	"time"
 	"strconv"
+	"time"
 )
 
 const (
@@ -23,10 +23,19 @@ func parseMeasurements(result []client.Result) ([]Measurement, error) {
 			m := make(map[string]int)
 
 			for _, val := range row.Values {
+				var timestamp int64
 				// Convert tuple of measurements to map <column: value>
 				for index, column := range row.Columns {
-					if i, err := strconv.ParseInt(fmt.Sprintf("%s", val[index]), 10, 64); err == nil {
-						m[column] = int(i)
+					if index == 0 {
+						t, err := time.Parse(time.RFC3339, val[index].(string))
+						if err != nil {
+							log.Fatal(err)
+						}
+						timestamp = t.Unix()
+					} else {
+						if i, err := strconv.ParseInt(fmt.Sprintf("%s", val[index]), 10, 64); err == nil {
+							m[column] = int(i)
+						}
 					}
 				}
 
@@ -38,7 +47,7 @@ func parseMeasurements(result []client.Result) ([]Measurement, error) {
 					Temperature: m[TEMPERATURE],
 					Gpio:        m[GPIO],
 					DeviceId:    m[DEVICE_ID],
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 				}
 
 				measurements = append(measurements, measurement)
