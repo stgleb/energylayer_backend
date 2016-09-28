@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"log"
-	"math/rand"
+	//"math/rand"
 	"strconv"
 	"time"
 )
@@ -78,6 +78,7 @@ func queryDB(clnt client.Client, cmd string) (res []client.Result, err error) {
 
 func main() {
 	// Make client
+	fmt.Println("Connection to database")
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     "http://localhost:8086",
 		Username: USER_NAME,
@@ -87,60 +88,67 @@ func main() {
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 	}
-	query := client.Query{
-		Command:  fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", DB_NAME),
-		Database: DB_NAME,
-	}
-
-	c.Query(query)
-	query = client.Query{
-		Command:  fmt.Sprintf("USE %s", DB_NAME),
-		Database: DB_NAME,
-	}
-	c.Query(query)
+	//query := client.Query{
+	//	Command:  fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", DB_NAME),
+	//	Database: DB_NAME,
+	//}
+	//
+	//c.Query(query)
+	//query = client.Query{
+	//	Command:  fmt.Sprintf("USE %s", DB_NAME),
+	//	Database: DB_NAME,
+	//}
+	//c.Query(query)
 
 	// Create a new point batch
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  DB_NAME,
-		Precision: "s",
-	})
-
-	if err != nil {
-		log.Printf("Error: %s", err.Error())
-	}
-
-	rand.Seed(11414)
-	for i := 0; i < 10; i++ {
-		// Create a point and add to batch
-		tags := map[string]string{"device_id": "abcd" + string(rand.Int())}
-		fields := map[string]interface{}{
-			VOLTAGE:     rand.Int() % 100,
-			TEMPERATURE: rand.Int() % 100,
-			CURRENT:     rand.Int() % 100,
-			POWER:       rand.Int() % 100,
-			GPIO:        rand.Int() % 100,
-		}
-		pt, err := client.NewPoint("data", tags, fields, time.Now())
-
-		if err != nil {
-			log.Printf("Error: %s", err.Error())
-		}
-
-		bp.AddPoint(pt)
-	}
-
-	// Write the batch
-	c.Write(bp)
+	//bp, err := client.NewBatchPoints(client.BatchPointsConfig{
+	//	Database:  DB_NAME,
+	//	Precision: "s",
+	//})
+	//
+	//if err != nil {
+	//	log.Printf("Error: %s", err.Error())
+	//}
+	//
+	//rand.Seed(11414)
+	//for i := 0; i < 10; i++ {
+	//	// Create a point and add to batch
+	//	tags := map[string]string{"device_id": "abcd" + string(rand.Int())}
+	//	fields := map[string]interface{}{
+	//		VOLTAGE:     rand.Int() % 100,
+	//		TEMPERATURE: rand.Int() % 100,
+	//		CURRENT:     rand.Int() % 100,
+	//		POWER:       rand.Int() % 100,
+	//		GPIO:        rand.Int() % 100,
+	//	}
+	//	pt, err := client.NewPoint("data", tags, fields, time.Now())
+	//
+	//	if err != nil {
+	//		log.Printf("Error: %s", err.Error())
+	//	}
+	//
+	//	bp.AddPoint(pt)
+	//}
+	//
+	//// Write the batch
+	//c.Write(bp)
+	fmt.Printf("Start querying data")
 	result, err := queryDB(c, fmt.Sprintf("SELECT * FROM data"))
 
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 	}
-
-	fmt.Println(result[0].Series[0].Name)
-	fmt.Println(result[0].Series[0].Tags)
-	fmt.Println(result[0].Series[0].Columns)
-	fmt.Println(result[0].Series[0].Values)
+	fmt.Println("Start processing data")
 	measurements, err := parseMeasurements(result)
+	fmt.Println(measurements)
+
+	fmt.Printf("Start querying data")
+	result, err = queryDB(c, fmt.Sprintf("SELECT * FROM data"))
+
+	if err != nil {
+		log.Printf("Error: %s", err.Error())
+	}
+	fmt.Println("Start processing data")
+	measurements, err = parseMeasurements(result)
 	fmt.Println(measurements)
 }
