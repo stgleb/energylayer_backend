@@ -14,3 +14,11 @@ func TestDecodeData(t *testing.T) {
 	assert.Equal(t, power, 3)
 	assert.Equal(t, temperature, 4)
 }
+
+func BenchmarkDecode(b *testing.B) {
+	s := "0001000200030004000500060007"
+
+	for i:=0;i <  b.N; i++ {
+		DecodeData(s)		
+	}
+}
