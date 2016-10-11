@@ -23,26 +23,30 @@ type InfluxDbStorage struct {
 	Client   client.Client
 }
 
-func NewInfluxDBStorage(dbName, userName, password, addr, clientType string) (*InfluxDbStorage, error) {
+func NewInfluxDBStorage(userName, password, dbName, addr, clientType string) (*InfluxDbStorage, error) {
+	var cl client.Client
+	var err error
+
 	switch clientType {
-
+	case "http":
+		cl, err = client.NewHTTPClient(client.HTTPConfig{
+			Addr:     addr,
+			Username: userName,
+			Password: password,
+		})
+		if err != nil {
+			return nil, err
+		}
+	// TODO: add other types of clients
 	}
-	http_client, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     addr,
-		Username: userName,
-		Password: password,
-	})
 
-	if err != nil {
-		return nil, err
-	}
 
 	// Create database if it not exists
 	query := client.Query{
 		Command:  fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName),
 		Database: dbName,
 	}
-	_, err = http_client.Query(query)
+	_, err = cl.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +56,12 @@ func NewInfluxDBStorage(dbName, userName, password, addr, clientType string) (*I
 		Database: dbName,
 	}
 	// TODO: research whether use statement is needed in Go client
-	_, err = http_client.Query(query)
+	_, err = cl.Query(query)
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, err = http_client.Ping(time.Second * 10)
+	_, _, err = cl.Ping(time.Second * 10)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +71,7 @@ func NewInfluxDBStorage(dbName, userName, password, addr, clientType string) (*I
 		UserName: userName,
 		Password: password,
 		Addr:     addr,
-		Client:   http_client,
+		Client:   cl,
 	}, nil
 }
 

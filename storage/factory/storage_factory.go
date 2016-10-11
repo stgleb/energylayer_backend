@@ -18,6 +18,7 @@ const (
 	DATABASE = "energylayer"
 	PORT     = "3306"
 	HOST     = "localhost"
+	HTTP 	 = "http"
 )
 
 func StorageFactory(storageType string) (Storage, error) {
@@ -50,7 +51,9 @@ func StorageFactory(storageType string) (Storage, error) {
 	case "influx":
 		uri = "influx"
 		dbType = "influx"
-		return influx.NewInfluxDBStorage("", "", "", "", "")
+		return influx.NewInfluxDBStorage(USER, PASSWORD, DATABASE,
+			fmt.Sprintf("%s:%s", HOST, PORT),
+			HTTP)
 	}
 
 	return nil, errors.New("No such db drivers")
