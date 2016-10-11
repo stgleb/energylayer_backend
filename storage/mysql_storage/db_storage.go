@@ -12,7 +12,7 @@ type DatabaseStorage struct {
 	*sql.DB
 }
 
-func (db DatabaseStorage) CreateMeasurements(m Measurement) error {
+func (db DatabaseStorage) CreateMeasurement(m Measurement) error {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
@@ -32,6 +32,41 @@ func (db DatabaseStorage) CreateMeasurements(m Measurement) error {
 		return err
 	}
 
+	// Prepared statements should be closed before commit transaction
+	stmt.Close()
+	err = tx.Commit()
+
+	if err != nil {
+		log.Printf("Error while commiting transaction message: %s", err.Error())
+		return err
+	}
+
+	log.Printf("Data has been inserted sucessfully")
+	return nil
+}
+
+// TODO: remove code duplication in both methods
+func (db DatabaseStorage) CreateMeasurements(measurements []Measurement) error {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("Error while opening transaction message: %s", err.Error())
+		return err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO measurement(timestamp, voltage, power, temperature, device_id)" +
+		"VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		log.Printf("Error while creating statement %s", err.Error())
+		return err
+	}
+
+	for _, m := range measurements {
+		_, err = stmt.Exec(m.Timestamp, m.Voltage, m.Power, m.Temperature, m.DeviceId)
+		if err != nil {
+			log.Printf("Error while execuring statement: %s", err.Error())
+			return err
+		}
+	}
 	// Prepared statements should be closed before commit transaction
 	stmt.Close()
 	err = tx.Commit()
@@ -140,7 +175,7 @@ func (db DatabaseStorage) UpdateDeviceIP(uuid, ipAddr string) error {
 	return nil
 }
 
-func (db DatabaseStorage) CreateDevice(uuid, ipAddress string) error {
+func (db DatabaseStorage) CreateDevice(uuid, ipAddress string, userId int) error {
 	tx, err := db.Begin()
 
 	if err != nil {
@@ -150,7 +185,9 @@ func (db DatabaseStorage) CreateDevice(uuid, ipAddress string) error {
 	defer tx.Rollback()
 
 	log.Printf("Inserting new device with uuid %s", uuid)
-	_, err = tx.Exec("INSERT INTO device(uuid, ip_addr) VALUES(?, ?)", uuid, ipAddress)
+	_, err = tx.Exec("INSERT INTO device(uuid, ip_addr, user_id) VALUES(?, ?, ?)", uuid,
+		ipAddress,
+		userId)
 
 	if err != nil {
 		log.Printf("Error while inserting device: %s", err.Error())

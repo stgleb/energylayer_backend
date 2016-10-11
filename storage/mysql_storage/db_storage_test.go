@@ -61,7 +61,7 @@ func TestCreateMeasurement(t *testing.T) {
 		Temperature: 30,
 	}
 
-	err = db.CreateMeasurements(m)
+	err = db.CreateMeasurement(m)
 	assert.NoError(t, err)
 }
 
@@ -77,13 +77,13 @@ func TestGetMeasurements(t *testing.T) {
 	assert.Equal(t, 0, len(measurements))
 
 	m1 := createMeasurement()
-	err = db.CreateMeasurements(m1)
+	err = db.CreateMeasurement(m1)
 	m2 := createMeasurement()
-	err = db.CreateMeasurements(m2)
+	err = db.CreateMeasurement(m2)
 	m3 := createMeasurement()
-	err = db.CreateMeasurements(m3)
+	err = db.CreateMeasurement(m3)
 	m4 := createMeasurement()
-	err = db.CreateMeasurements(m4)
+	err = db.CreateMeasurement(m4)
 	assert.NoError(t, err)
 
 	measurements, err = db.GetMeasurements(4)
@@ -104,16 +104,16 @@ func TestGetMeasurementsByDevice(t *testing.T) {
 
 	m1 := createMeasurement()
 	m1.DeviceId = 2
-	err = db.CreateMeasurements(m1)
+	err = db.CreateMeasurement(m1)
 	m2 := createMeasurement()
 	m2.DeviceId = 2
-	err = db.CreateMeasurements(m2)
+	err = db.CreateMeasurement(m2)
 	m3 := createMeasurement()
 	m3.DeviceId = 3
-	err = db.CreateMeasurements(m3)
+	err = db.CreateMeasurement(m3)
 	m4 := createMeasurement()
 	m4.DeviceId = 2
-	err = db.CreateMeasurements(m4)
+	err = db.CreateMeasurement(m4)
 	assert.NoError(t, err)
 
 	measurements, err = db.GetMeasurementsByDevice(2, 4)
@@ -128,10 +128,10 @@ func TestCreateDevice(t *testing.T) {
 	_, err = db.Exec("CREATE TABLE device(`id` INTEGER PRIMARY KEY,`uuid` varchar(64) UNIQUE NOT NULL,`user_id` int(11) DEFAULT NULL,`ip_addr` varchar(40) DEFAULT NULL);")
 	assert.NoError(t, err)
 	// Insert first device
-	err = db.CreateDevice("abcd", "127.0.0.1")
+	err = db.CreateDevice("abcd", "127.0.0.1", 1)
 	assert.NoError(t, err)
 	// Check that device with the same uuid will fail
-	err = db.CreateDevice("abcd", "127.0.0.1")
+	err = db.CreateDevice("abcd", "127.0.0.1", 1)
 	assert.Error(t, err)
 }
 
@@ -143,7 +143,7 @@ func TestGetDeviceById(t *testing.T) {
 	assert.NoError(t, err)
 
 	uuid := "abcd"
-	err = db.CreateDevice(uuid, "127.0.0.1")
+	err = db.CreateDevice(uuid, "127.0.0.1", 1)
 	assert.NoError(t, err)
 
 	device, err := db.GetDeviceById(uuid)
