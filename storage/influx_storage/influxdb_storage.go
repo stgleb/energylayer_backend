@@ -1,9 +1,10 @@
-package storage
+package influxdb_storage
 
 import (
 	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/pkg/errors"
+	. "../../storage"
 	"log"
 	"time"
 )
@@ -107,6 +108,9 @@ func (influx InfluxDbStorage) CreateMeasurements(measurements []Measurement) err
 		}
 	}
 	err = influx.Client.Write(batch)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

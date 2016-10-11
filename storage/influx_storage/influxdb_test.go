@@ -1,8 +1,9 @@
-package storage
+package influxdb_storage
 
 import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/stretchr/testify/assert"
+	. "../../storage"
 	"testing"
 	"time"
 )
@@ -23,11 +24,7 @@ var influx InfluxDbStorage = InfluxDbStorage{
 	UserName: USER,
 	Password: PASSWORD,
 	Addr:     ADDR,
-	Client:   NewFakeClient(),
-}
-
-func NewFakeClient() *FakeClient {
-	return &FakeClient{}
+	Client:   fakeClient,
 }
 
 func (fake FakeClient) Ping(timeout time.Duration) (time.Duration, string, error) {
