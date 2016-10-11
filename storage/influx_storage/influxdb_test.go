@@ -74,7 +74,7 @@ func TestQueryDB(t *testing.T) {
 }
 
 func TestInfluxGetMeasurement(t *testing.T) {
-	measurements, err := influx.GetMeasurement(10)
+	measurements, err := influx.GetMeasurements(10)
 	assert.NoError(t, err)
 	assert.NotNil(t, measurements)
 	assert.Equal(t, len(measurements), 0)

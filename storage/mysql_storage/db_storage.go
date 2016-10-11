@@ -6,13 +6,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"github.com/pkg/errors"
 )
 
 type DatabaseStorage struct {
 	*sql.DB
 }
 
-func (db DatabaseStorage) CreateMeasurement(m Measurement) error {
+func (db DatabaseStorage) CreateMeasurements(m Measurement) error {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("Error while opening transaction message: %s", err.Error())
@@ -160,4 +161,8 @@ func (db DatabaseStorage) CreateDevice(uuid, ipAddress string) error {
 	tx.Commit()
 
 	return nil
+}
+
+func (db DatabaseStorage) GetMeasurementsByDevice(device_id, count int) ([]Measurement, error) {
+	return nil, errors.New("Not implemented")
 }

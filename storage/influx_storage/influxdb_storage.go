@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"time"
+	"strconv"
 )
 
 const (
@@ -160,10 +161,19 @@ func (influx InfluxDbStorage) parseMeasurements(result []client.Result) ([]Measu
 			var m map[string]int
 
 			for _, val := range row.Values {
+				var timestamp int64
 				// Convert tuple of measurements to map <column: value>
 				for index, column := range row.Columns {
-					if asInt, ok := val[index].(int); ok {
-						m[column] = asInt
+					if index == 0 {
+						t, err := time.Parse(time.RFC3339, val[index].(string))
+						if err != nil {
+							log.Fatal(err)
+						}
+						timestamp = t.Unix()
+					} else {
+						if i, err := strconv.ParseInt(fmt.Sprintf("%s", val[index]), 10, 64); err == nil {
+							m[column] = int(i)
+						}
 					}
 				}
 
@@ -175,7 +185,7 @@ func (influx InfluxDbStorage) parseMeasurements(result []client.Result) ([]Measu
 					Temperature: m[TEMPERATURE],
 					Gpio:        m[GPIO],
 					DeviceId:    m[DEVICE_ID],
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 				}
 
 				measurements = append(measurements, measurement)
@@ -186,7 +196,7 @@ func (influx InfluxDbStorage) parseMeasurements(result []client.Result) ([]Measu
 	return measurements, nil
 }
 
-func (influx InfluxDbStorage) GetMeasurement(count int) ([]Measurement, error) {
+func (influx InfluxDbStorage) GetMeasurements(count int) ([]Measurement, error) {
 	cmd := fmt.Sprintf("SELECT * FROM measurement")
 	result, err := influx.queryDB(cmd)
 
@@ -209,3 +219,9 @@ func (influx InfluxDbStorage) GetDeviceById(uuid string) (Device, error) {
 func (influx InfluxDbStorage) CreateDevice(uuid, ipAddress string, userId int) error {
 	return errors.New("Not implemented")
 }
+
+func (influx InfluxDbStorage) GetMeasurementsByDevice(device_id, count int) ([]Measurement, error) {
+	return nil, nil
+}
+
+

@@ -61,7 +61,7 @@ func TestCreateMeasurement(t *testing.T) {
 		Temperature: 30,
 	}
 
-	err = db.CreateMeasurement(m)
+	err = db.CreateMeasurements(m)
 	assert.NoError(t, err)
 }
 
@@ -77,13 +77,13 @@ func TestGetMeasurements(t *testing.T) {
 	assert.Equal(t, 0, len(measurements))
 
 	m1 := createMeasurement()
-	err = db.CreateMeasurement(m1)
+	err = db.CreateMeasurements(m1)
 	m2 := createMeasurement()
-	err = db.CreateMeasurement(m2)
+	err = db.CreateMeasurements(m2)
 	m3 := createMeasurement()
-	err = db.CreateMeasurement(m3)
+	err = db.CreateMeasurements(m3)
 	m4 := createMeasurement()
-	err = db.CreateMeasurement(m4)
+	err = db.CreateMeasurements(m4)
 	assert.NoError(t, err)
 
 	measurements, err = db.GetMeasurements(4)

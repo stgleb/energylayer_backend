@@ -1,7 +1,8 @@
 package main
 
 import (
-	. "../../storage"
+	. "../../../storage"
+	influx "../../influx_storage"
 	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"log"
@@ -12,6 +13,7 @@ import (
 
 const (
 	DB_NAME   = "energylayer"
+	PASSWORD = "1234"
 	USER_NAME = "test"
 )
 
@@ -46,7 +48,7 @@ func parseMeasurements(result []client.Result) ([]Measurement, error) {
 					Power:       m[POWER],
 					Temperature: m[TEMPERATURE],
 					Gpio:        m[GPIO],
-					DeviceId:    m[DEVICE_ID],
+					DeviceId:    m[influx.DEVICE_ID],
 					Timestamp:   timestamp,
 				}
 
