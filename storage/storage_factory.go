@@ -1,10 +1,13 @@
 package storage
 
 import (
+	influx "./influx_storage"
+	mysql "./mysql_storage"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pkg/errors"
 	"log"
 )
 
@@ -16,11 +19,7 @@ const (
 	HOST     = "localhost"
 )
 
-type DatabaseStorage struct {
-	*sql.DB
-}
-
-func StorageFactory(storageType string) (DatabaseStorage, error) {
+func StorageFactory(storageType string) (Storage, error) {
 	var uri string
 	var dbType string
 
@@ -28,21 +27,32 @@ func StorageFactory(storageType string) (DatabaseStorage, error) {
 	case "mysql":
 		uri = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", USER, PASSWORD, HOST, PORT, DATABASE)
 		dbType = "mysql"
+		storage, err := newStorage(uri, dbType)
+
+		if err != nil {
+			return mysql.DatabaseStorage{storage}, err
+		}
+
+		return mysql.DatabaseStorage{storage}, nil
 	case "memory":
 		uri = ":memory:"
 		dbType = "sqlite3"
+
+		storage, err := newStorage(uri, dbType)
+
+		if err != nil {
+			return mysql.DatabaseStorage{storage}, err
+		}
+
+		return mysql.DatabaseStorage{storage}, nil
+
 	case "influx":
 		uri = "influx"
 		dbType = "influx"
+		return influx.NewInfluxDBStorage("", "", "", "", "")
 	}
 
-	storage, err := newStorage(uri, dbType)
-
-	if err != nil {
-		return DatabaseStorage{storage}, err
-	}
-
-	return DatabaseStorage{storage}, nil
+	return nil, errors.New("No such db drivers")
 }
 
 func newStorage(uri, dbType string) (*sql.DB, error) {
