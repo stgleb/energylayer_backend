@@ -38,7 +38,7 @@ func (fake FakeClient) Write(bp client.BatchPoints) error {
 func (fake FakeClient) Query(q client.Query) (*client.Response, error) {
 	return &client.Response{
 		[]client.Result{},
-		nil,
+		"",
 	}, nil
 }
 
@@ -55,10 +55,9 @@ func TestAddMeasurementToBatch(t *testing.T) {
 		Power:       44,
 		Gpio:        10,
 	}
-	batch, err := client.NewBatchPoints(client.HTTPConfig{
-		Addr:     influx.Addr,
-		Username: influx.UserName,
-		Password: influx.Password,
+	batch, err := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  influx.DbName,
+		Precision: PRECISION,
 	})
 	assert.NoError(t, err)
 	influx.AddMeasurementToBatch(m, batch)
@@ -82,7 +81,7 @@ func TestInfluxGetMeasurement(t *testing.T) {
 
 func TestInfluxGetDeviceById(t *testing.T) {
 	device, err := influx.GetDeviceById("abcd")
-	assert.Nil(t, device)
+	assert.Equal(t, 0, device.Id)
 	assert.Error(t, err)
 }
 
