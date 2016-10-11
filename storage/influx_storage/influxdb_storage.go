@@ -6,8 +6,8 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/pkg/errors"
 	"log"
-	"time"
 	"strconv"
+	"time"
 )
 
 const (
@@ -37,9 +37,8 @@ func NewInfluxDBStorage(userName, password, dbName, addr, clientType string) (*I
 		if err != nil {
 			return nil, err
 		}
-	// TODO: add other types of clients
+		// TODO: add other types of clients
 	}
-
 
 	// Create database if it not exists
 	query := client.Query{
@@ -227,5 +226,3 @@ func (influx InfluxDbStorage) CreateDevice(uuid, ipAddress string, userId int) e
 func (influx InfluxDbStorage) GetMeasurementsByDevice(device_id, count int) ([]Measurement, error) {
 	return nil, nil
 }
-
-

@@ -18,7 +18,7 @@ const (
 	DATABASE = "energylayer"
 	PORT     = "3306"
 	HOST     = "localhost"
-	HTTP 	 = "http"
+	HTTP     = "http"
 )
 
 func StorageFactory(storageType string) (Storage, error) {
