@@ -1,8 +1,8 @@
 package storage
 
 import (
-	influx "./influx_storage"
-	mysql "./mysql_storage"
+	influx "../influx_storage"
+	mysql "../mysql_storage"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
