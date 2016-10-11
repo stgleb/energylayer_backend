@@ -1,9 +1,9 @@
 package factory
 
 import (
+	. "../../storage"
 	influx "../influx_storage"
 	mysql "../mysql_storage"
-	. "../../storage"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"

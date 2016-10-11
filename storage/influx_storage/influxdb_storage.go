@@ -1,10 +1,10 @@
 package influxdb_storage
 
 import (
+	. "../../storage"
 	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/pkg/errors"
-	. "../../storage"
 	"log"
 	"time"
 )

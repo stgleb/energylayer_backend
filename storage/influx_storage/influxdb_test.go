@@ -1,9 +1,9 @@
 package influxdb_storage
 
 import (
+	. "../../storage"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/stretchr/testify/assert"
-	. "../../storage"
 	"testing"
 	"time"
 )
