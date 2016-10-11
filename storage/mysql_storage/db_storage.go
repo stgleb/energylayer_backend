@@ -6,7 +6,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-	"github.com/pkg/errors"
 )
 
 type DatabaseStorage struct {
@@ -163,6 +162,49 @@ func (db DatabaseStorage) CreateDevice(uuid, ipAddress string) error {
 	return nil
 }
 
-func (db DatabaseStorage) GetMeasurementsByDevice(device_id, count int) ([]Measurement, error) {
-	return nil, errors.New("Not implemented")
+func (db DatabaseStorage) GetMeasurementsByDevice(deviceId, count int) ([]Measurement, error) {
+	result := make([]Measurement, 0, count)
+	tx, err := db.Begin()
+
+	if err != nil {
+		log.Printf("Error while opening transaction message: %s", err.Error())
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT timestamp, voltage, power, temperature, device_id"+
+		" from measurement WHERE device_id = ? ORDER BY timestamp DESC LIMIT ?", deviceId, count)
+
+	if err != nil {
+		log.Printf("Error while executing query %s", err.Error())
+		return nil, err
+	}
+
+	var timestamp int64
+	var voltage int
+	var power int
+	var temperature int
+	var device_id int
+
+	for rows.Next() {
+		err := rows.Scan(&timestamp, &voltage, &power,
+			&temperature, &device_id)
+		if err != nil {
+			log.Printf("Error while extracting value from row %s", err.Error())
+			return nil, err
+		}
+
+		m := Measurement{
+			Timestamp:   timestamp,
+			Voltage:     voltage,
+			Power:       power,
+			Temperature: temperature,
+			DeviceId:    device_id,
+		}
+
+		result = append(result, m)
+	}
+	rows.Close()
+	tx.Commit()
+
+	return result, nil
 }

@@ -91,6 +91,36 @@ func TestGetMeasurements(t *testing.T) {
 	assert.Equal(t, 4, len(measurements))
 }
 
+func TestGetMeasurementsByDevice(t *testing.T) {
+	db, err := getDB()
+	assert.NoError(t, err)
+	// Create table measurement
+	_, err = db.Exec("CREATE TABLE measurement( `id` INTEGER PRIMARY KEY,`tag` varchar(64) DEFAULT NULL,`gpio` int(11) DEFAULT NULL,`voltage` int(11) DEFAULT NULL,`power` int(11) DEFAULT NULL,`temperature` int(11) DEFAULT NULL,`timestamp` int(11) DEFAULT NULL,`device_id` int(11) DEFAULT NULL);")
+	measurements, _ := db.GetMeasurements(4)
+
+	log.Printf("%v", db)
+	// Test that data is empty
+	assert.Equal(t, 0, len(measurements))
+
+	m1 := createMeasurement()
+	m1.DeviceId = 2
+	err = db.CreateMeasurements(m1)
+	m2 := createMeasurement()
+	m2.DeviceId = 2
+	err = db.CreateMeasurements(m2)
+	m3 := createMeasurement()
+	m3.DeviceId = 3
+	err = db.CreateMeasurements(m3)
+	m4 := createMeasurement()
+	m4.DeviceId = 2
+	err = db.CreateMeasurements(m4)
+	assert.NoError(t, err)
+
+	measurements, err = db.GetMeasurementsByDevice(2, 4)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(measurements))
+}
+
 func TestCreateDevice(t *testing.T) {
 	db, err := getDB()
 	assert.NoError(t, err)
@@ -119,7 +149,4 @@ func TestGetDeviceById(t *testing.T) {
 	device, err := db.GetDeviceById(uuid)
 	assert.Equal(t, uuid, device.Uuid)
 	assert.NoError(t, err)
-}
-
-func TestGetMeasurementsByDevice(t *testing.T) {
 }
