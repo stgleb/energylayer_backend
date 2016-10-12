@@ -34,14 +34,18 @@ func NewInfluxDBStorage(userName, password, dbName, addr, clientType string) (*I
 			Username: userName,
 			Password: password,
 		})
-		if err != nil {
-			return nil, err
-		}
-		// TODO: add other types of clients
+	case "udp":
+		// Create new UDP client with default payload size
+		cl, err = client.NewUDPClient(client.UDPConfig{
+			Addr: addr,
+		})
 	default:
 		return nil, errors.New("Wrong client type")
 	}
 
+	if err != nil {
+		return nil, err
+	}
 	// Create database if it not exists
 	query := client.Query{
 		Command:  fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName),
