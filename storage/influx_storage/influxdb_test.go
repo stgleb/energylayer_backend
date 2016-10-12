@@ -4,6 +4,7 @@ import (
 	. "../../storage"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"time"
 )
@@ -26,6 +27,11 @@ var influx InfluxDbStorage = InfluxDbStorage{
 	Addr:     ADDR,
 	Client:   fakeClient,
 }
+
+var (
+	fakeClient FakeClient
+	influx     InfluxDbStorage
+)
 
 func (fake FakeClient) Ping(timeout time.Duration) (time.Duration, string, error) {
 	return time.Millisecond * 1, "", nil
@@ -88,4 +94,17 @@ func TestInfluxGetDeviceById(t *testing.T) {
 func TestInfluxCreateDevice(t *testing.T) {
 	err := influx.CreateDevice("123", "", 1)
 	assert.Error(t, err)
+}
+
+func TestMain(m *testing.M) {
+	// Initializing influx object
+	influx = InfluxDbStorage{
+		DbName:   DB_NAME,
+		UserName: USER,
+		Password: PASSWORD,
+		Addr:     ADDR,
+		Client:   fakeClient,
+	}
+	code := m.Run()
+	os.Exit(code)
 }
