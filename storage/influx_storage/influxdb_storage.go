@@ -38,6 +38,8 @@ func NewInfluxDBStorage(userName, password, dbName, addr, clientType string) (*I
 			return nil, err
 		}
 		// TODO: add other types of clients
+	default:
+		return nil, errors.New("Wrong client type")
 	}
 
 	// Create database if it not exists

@@ -16,43 +16,20 @@ const (
 	ADDR     = "http://localhost:8086"
 )
 
-type FakeClient struct{}
-
-var fakeClient FakeClient
-
-var influx InfluxDbStorage = InfluxDbStorage{
-	DbName:   DB_NAME,
-	UserName: USER,
-	Password: PASSWORD,
-	Addr:     ADDR,
-	Client:   fakeClient,
-}
-
 var (
-	fakeClient FakeClient
+	mockClient MockClient
 	influx     InfluxDbStorage
 )
 
-func (fake FakeClient) Ping(timeout time.Duration) (time.Duration, string, error) {
-	return time.Millisecond * 1, "", nil
-}
+func TestNewInfluxDBStorageError(t *testing.T) {
+	storage, err := NewInfluxDBStorage(USER, PASSWORD, DB_NAME, ADDR, "_http")
+	assert.Error(t, err)
+	assert.Nil(t, storage)
 
-func (fake FakeClient) Write(bp client.BatchPoints) error {
-	return nil
-}
-
-func (fake FakeClient) Query(q client.Query) (*client.Response, error) {
-	return &client.Response{
-		[]client.Result{},
-		"",
-	}, nil
-}
-
-func (fake FakeClient) Close() error {
-	return nil
 }
 
 func TestAddMeasurementToBatch(t *testing.T) {
+	mockClient.Refresh()
 	m := Measurement{
 		DeviceId:    1,
 		Temperature: 10,
@@ -72,17 +49,39 @@ func TestAddMeasurementToBatch(t *testing.T) {
 }
 
 func TestQueryDB(t *testing.T) {
+	mockClient.Refresh()
 	measurements, err := influx.queryDB("My command")
 	assert.NoError(t, err)
 	assert.NotNil(t, measurements)
 	assert.Equal(t, len(measurements), 0)
+	assert.Equal(t, 1, mockClient.Called["Query"])
 }
 
 func TestInfluxGetMeasurement(t *testing.T) {
+	mockClient.Refresh()
 	measurements, err := influx.GetMeasurements(10)
 	assert.NoError(t, err)
 	assert.NotNil(t, measurements)
 	assert.Equal(t, len(measurements), 0)
+	assert.Equal(t, 1, mockClient.Called["Query"])
+}
+
+func TestInfluxCreateMeasurements(t *testing.T) {
+	mockClient.Refresh()
+	measurements := []Measurement{Measurement{
+		Voltage:     0,
+		Power:       0,
+		Temperature: 0,
+		Current:     0,
+	}, Measurement{
+		Voltage:     0,
+		Power:       0,
+		Temperature: 0,
+		Current:     0,
+	}}
+	err := influx.CreateMeasurements(measurements)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, mockClient.Called["Write"])
 }
 
 func TestInfluxGetDeviceById(t *testing.T) {
@@ -97,13 +96,38 @@ func TestInfluxCreateDevice(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
+	mockClient.Refresh()
+	// Mocking client functions
+	mockClient.FakeClose = func() error {
+		mockClient.Called["Close"] += 1
+		return nil
+	}
+
+	mockClient.FakeWrite = func(bp client.BatchPoints) error {
+		mockClient.Called["Write"] += 1
+		return nil
+	}
+
+	mockClient.FakeQuery = func(q client.Query) (*client.Response, error) {
+		mockClient.Called["Query"] += 1
+		return &client.Response{
+			[]client.Result{},
+			"",
+		}, nil
+	}
+
+	mockClient.FakePing = func(timeout time.Duration) (time.Duration, string, error) {
+		mockClient.Called["Ping"] += 1
+		return time.Millisecond * 1, "", nil
+	}
+
 	// Initializing influx object
 	influx = InfluxDbStorage{
 		DbName:   DB_NAME,
 		UserName: USER,
 		Password: PASSWORD,
 		Addr:     ADDR,
-		Client:   fakeClient,
+		Client:   mockClient,
 	}
 	code := m.Run()
 	os.Exit(code)
