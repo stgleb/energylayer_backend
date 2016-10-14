@@ -14,7 +14,8 @@ type Worker struct {
 	DBStorage      Storage
 }
 
-func NewWorker(pool FixedPool, stop chan struct{}, storage Storage) Worker {
+// TODO: group interfaces arguments together
+func NewWorker(pool Pool, stop chan struct{}, storage Storage) Worker {
 	return Worker{
 		Pool:           pool,
 		ReceiveChannel: make(chan Measurement),
