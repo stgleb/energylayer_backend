@@ -1,7 +1,11 @@
 package worker_pool
 
+import (
+	. "../storage"
+)
+
 type Pool interface {
-	Submit(job Job)
+	Submit(Measurement)
 	Stop()
-	JobQueue() chan chan Job
+	JobQueue() chan chan Measurement
 }

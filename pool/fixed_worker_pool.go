@@ -1,8 +1,12 @@
 package worker_pool
 
+import (
+	. "../storage"
+)
+
 type FixedPool struct {
-	queue           chan chan Job
-	input           chan Job
+	queue           chan chan Measurement
+	input           chan Measurement
 	stop            chan struct{}
 	stopChannels    []chan struct{}
 	workerCount     int
@@ -12,8 +16,8 @@ type FixedPool struct {
 // NOTE: maximum quantity of goroutines is max(queueSize, maxWorkersCount)
 func NewWorkerPool(queueSize, maxWorkersCount int) {
 	pool := FixedPool{
-		queue:           make(chan chan Job, maxWorkersCount),
-		input:           make(chan Job, queueSize),
+		queue:           make(chan chan Measurement, maxWorkersCount),
+		input:           make(chan Measurement, queueSize),
 		stop:            make(chan struct{}),
 		stopChannels:    make(chan struct{}),
 		maxWorkersCount: maxWorkersCount,
@@ -25,11 +29,11 @@ func NewWorkerPool(queueSize, maxWorkersCount int) {
 	return pool
 }
 
-func (pool FixedPool) Submit(job Job) {
-	pool.input <- job
+func (pool FixedPool) Submit(measurement Measurement) {
+	pool.input <- measurement
 }
 
-func (pool FixedPool) JobQueue() chan chan Job {
+func (pool FixedPool) JobQueue() chan chan Measurement {
 	return pool.queue
 }
 
@@ -44,7 +48,8 @@ func (pool FixedPool) run() {
 			// If worker limit is not exceed - spawn new worker
 			if pool.workerCount < pool.maxWorkersCount {
 				stopChannel := make(chan struct{})
-				worker := NewWorker(pool, stopChannel)
+				// TODO: Add storage to worker
+				worker := NewWorker(pool, stopChannel, nil)
 				pool.stopChannels = append(pool.stopChannels,
 					stopChannel)
 				go worker.Run()
