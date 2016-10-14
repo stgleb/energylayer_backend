@@ -9,7 +9,7 @@ const BUFFER_SIZE = 1024
 // Worker
 type Worker struct {
 	Pool           FixedPool
-	ReceiveChannel chan Measurement
+	ReceiveChannel chan []Measurement
 	Stop           chan struct{}
 	DBStorage      Storage
 }
@@ -25,17 +25,15 @@ func NewWorker(pool FixedPool, stop chan struct{}, storage Storage) Worker {
 
 func (worker Worker) Run() {
 	go func() {
-		buffer := make([]Measurement, 0, BUFFER_SIZE)
 
 		for {
 			// Send workers receive channel to pool, to get new jobs.
 			worker.Pool.JobQueue() <- worker.ReceiveChannel
 
 			select {
-			case measurement := <-worker.ReceiveChannel:
-				buffer := append(buffer, measurement)
-				worker.DBStorage.CreateMeasurements(buffer)
-				buffer = make([]Measurement, 0, BUFFER_SIZE)
+			case measurements := <-worker.ReceiveChannel:
+			// Save data to storage
+				worker.DBStorage.CreateMeasurements(measurements)
 			case <-worker.Stop:
 				// Stop the worker
 				return

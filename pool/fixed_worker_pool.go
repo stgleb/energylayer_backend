@@ -5,7 +5,7 @@ import (
 )
 
 type FixedPool struct {
-	queue           chan chan Measurement
+	queue           chan chan []Measurement
 	input           chan Measurement
 	stop            chan struct{}
 	stopChannels    []chan struct{}
@@ -16,7 +16,7 @@ type FixedPool struct {
 // NOTE: maximum quantity of goroutines is max(queueSize, maxWorkersCount)
 func NewWorkerPool(queueSize, maxWorkersCount int) {
 	pool := FixedPool{
-		queue:           make(chan chan Measurement, maxWorkersCount),
+		queue:           make(chan chan []Measurement, maxWorkersCount),
 		input:           make(chan Measurement, queueSize),
 		stop:            make(chan struct{}),
 		stopChannels:    make(chan struct{}),
@@ -42,9 +42,12 @@ func (pool FixedPool) Stop() {
 }
 
 func (pool FixedPool) run() {
+	buffer := make([]Measurement, 0, BUFFER_SIZE)
+	var jobChan chan Measurement
+
 	for {
 		select {
-		case job := <-pool.input:
+		case m := <-pool.input:
 			// If worker limit is not exceed - spawn new worker
 			if pool.workerCount < pool.maxWorkersCount {
 				stopChannel := make(chan struct{})
@@ -54,10 +57,14 @@ func (pool FixedPool) run() {
 					stopChannel)
 				go worker.Run()
 			}
-			// Obtain input channel of worker
-			jobChan := <-pool.queue
-			// Submit job to worker
-			jobChan <- job
+			if len(buffer) < BUFFER_SIZE - 1 {
+				// Obtain input channel of worker
+				jobChan = <-pool.queue
+				// Append measurement to buffer
+				buffer = append(buffer, m)
+			} else {
+				jobChan <- buffer
+			}
 		case <-pool.stop:
 			for stopChannel := range pool.stopChannels {
 				stopChannel <- struct{}{}
